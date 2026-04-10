@@ -89,7 +89,10 @@ The goal is to provide financial institutions with actionable insights to **mini
 
 ### Confusion Matrix Comparison
 - **Default threshold (0.5):** predicts almost no defaulters  
-- **Optimized threshold (0.168):** balances precision and recall  
+- **Optimized threshold (0.168):** balances precision and recall
+- 
+<img width="1192" height="470" alt="image" src="https://github.com/user-attachments/assets/f84efb96-0ea9-462a-9fb8-07b2dc1fcea2" />
+<img width="1192" height="470" alt="image" src="https://github.com/user-attachments/assets/791885b0-839f-4070-869c-6874be0df0a2" />
 
 ![Confusion Matrix](images/confusion_matrix.png)  
 *Confusion matrix showing model performance at the optimized threshold.*
@@ -127,13 +130,3 @@ SHAP analysis provides interpretable insights for risk decisions:
 
 - Model is being deployed as an **interactive web app using Streamlit**  
 - Users can input borrower information and receive **real-time risk predictions**
-
----
-
-## ▶️ How to Run
-
-```bash
-git clone https://github.com/your-username/credit-risk-default-prediction.git
-cd credit-risk-default-prediction
-pip install -r requirements.txt
-streamlit run app.py
