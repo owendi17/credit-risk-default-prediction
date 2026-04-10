@@ -93,8 +93,6 @@ The goal is to provide financial institutions with actionable insights to **mini
 - 
 <img width="1192" height="470" alt="image" src="https://github.com/user-attachments/assets/f84efb96-0ea9-462a-9fb8-07b2dc1fcea2" />
 <img width="1192" height="470" alt="image" src="https://github.com/user-attachments/assets/791885b0-839f-4070-869c-6874be0df0a2" />
-
-![Confusion Matrix](images/confusion_matrix.png)  
 *Confusion matrix showing model performance at the optimized threshold.*
 
 ### Precision-Recall Curve
