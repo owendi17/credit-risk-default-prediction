@@ -4,6 +4,85 @@ import numpy as np
 import pickle
 from datetime import datetime
 
+# ==================== HELPER FUNCTIONS (DEFINED FIRST) ====================
+
+@st.cache_data
+def calculate_risk_score(data):
+    """Calculate risk score based on customer profile."""
+    score = 0.2  # Base score
+    
+    # Debt ratio impact
+    if data["DebtRatio"] > 0.8:
+        score += 0.25
+    elif data["DebtRatio"] > 0.5:
+        score += 0.15
+    
+    # Payment history impact
+    score += data["NumberOfTimes90DaysLate"] * 0.15
+    score += data["NumberOfTimes60DaysLate"] * 0.08
+    
+    # Credit utilization impact
+    if data["RevolvingUtilizationOfUnsecuredLines"] > 0.8:
+        score += 0.15
+    elif data["RevolvingUtilizationOfUnsecuredLines"] > 0.6:
+        score += 0.08
+    
+    # Recent delinquency impact
+    if data["MonthsSinceLastDelinquent"] < 12:
+        score += 0.15
+    elif data["MonthsSinceLastDelinquent"] < 36:
+        score += 0.08
+    
+    return min(score, 0.95)
+
+def identify_risk_factors(data):
+    """Identify key risk factors in the profile."""
+    factors = []
+    
+    if data["DebtRatio"] > 0.8:
+        factors.append(("High Debt-to-Income Ratio", "High"))
+    
+    if data["NumberOfTimes90DaysLate"] > 0:
+        factors.append(("Recent 90+ Day Late Payments", "High"))
+    
+    if data["RevolvingUtilizationOfUnsecuredLines"] > 0.8:
+        factors.append(("High Credit Card Utilization", "Medium"))
+    
+    if data["MonthsSinceLastDelinquent"] < 12 and data["MonthsSinceLastDelinquent"] > 0:
+        factors.append(("Recent Payment Delinquency", "High"))
+    
+    if data["NumberOfDependents"] > 3 and data["MonthlyIncome"] < 3000:
+        factors.append(("High Dependent Burden Relative to Income", "Medium"))
+    
+    if len(factors) == 0:
+        factors.append(("Financial Profile Appears Stable", "Low"))
+    
+    return factors
+
+def generate_recommendations(data, risk_score):
+    """Generate actionable recommendations."""
+    recommendations = []
+    
+    if data["DebtRatio"] > 0.6:
+        recommendations.append("Reduce outstanding debt or increase income to improve debt-to-income ratio")
+    
+    if data["RevolvingUtilizationOfUnsecuredLines"] > 0.7:
+        recommendations.append("Pay down credit card balances to lower credit utilization ratio")
+    
+    if data["NumberOfTimes90DaysLate"] > 0:
+        recommendations.append("Demonstrate consistent on-time payments for at least 12 months")
+    
+    if data["MonthsSinceLastDelinquent"] < 24 and data["MonthsSinceLastDelinquent"] > 0:
+        recommendations.append("Continue maintaining current payment schedule; delinquency will age with time")
+    
+    if risk_score < 0.3:
+        recommendations.append("Excellent profile - eligible for competitive interest rates")
+    
+    if len(recommendations) == 0:
+        recommendations.append("Maintain current financial discipline and monitor credit profile")
+    
+    return recommendations
+
 # Configure Streamlit page
 st.set_page_config(
     page_title="💳 Credit Risk Assessment",
@@ -441,84 +520,6 @@ if predict_button:
     except Exception as e:
         st.error(f"❌ Error in prediction: {str(e)}")
         st.info("Please check all input values and try again.")
-
-# ==================== HELPER FUNCTIONS ====================
-
-def calculate_risk_score(data):
-    """Calculate risk score based on customer profile."""
-    score = 0.2  # Base score
-    
-    # Debt ratio impact
-    if data["DebtRatio"] > 0.8:
-        score += 0.25
-    elif data["DebtRatio"] > 0.5:
-        score += 0.15
-    
-    # Payment history impact
-    score += data["NumberOfTimes90DaysLate"] * 0.15
-    score += data["NumberOfTimes60DaysLate"] * 0.08
-    
-    # Credit utilization impact
-    if data["RevolvingUtilizationOfUnsecuredLines"] > 0.8:
-        score += 0.15
-    elif data["RevolvingUtilizationOfUnsecuredLines"] > 0.6:
-        score += 0.08
-    
-    # Recent delinquency impact
-    if data["MonthsSinceLastDelinquent"] < 12:
-        score += 0.15
-    elif data["MonthsSinceLastDelinquent"] < 36:
-        score += 0.08
-    
-    return min(score, 0.95)
-
-def identify_risk_factors(data):
-    """Identify key risk factors in the profile."""
-    factors = []
-    
-    if data["DebtRatio"] > 0.8:
-        factors.append(("High Debt-to-Income Ratio", "High"))
-    
-    if data["NumberOfTimes90DaysLate"] > 0:
-        factors.append(("Recent 90+ Day Late Payments", "High"))
-    
-    if data["RevolvingUtilizationOfUnsecuredLines"] > 0.8:
-        factors.append(("High Credit Card Utilization", "Medium"))
-    
-    if data["MonthsSinceLastDelinquent"] < 12 and data["MonthsSinceLastDelinquent"] > 0:
-        factors.append(("Recent Payment Delinquency", "High"))
-    
-    if data["NumberOfDependents"] > 3 and data["MonthlyIncome"] < 3000:
-        factors.append(("High Dependent Burden Relative to Income", "Medium"))
-    
-    if len(factors) == 0:
-        factors.append(("Financial Profile Appears Stable", "Low"))
-    
-    return factors
-
-def generate_recommendations(data, risk_score):
-    """Generate actionable recommendations."""
-    recommendations = []
-    
-    if data["DebtRatio"] > 0.6:
-        recommendations.append("Reduce outstanding debt or increase income to improve debt-to-income ratio")
-    
-    if data["RevolvingUtilizationOfUnsecuredLines"] > 0.7:
-        recommendations.append("Pay down credit card balances to lower credit utilization ratio")
-    
-    if data["NumberOfTimes90DaysLate"] > 0:
-        recommendations.append("Demonstrate consistent on-time payments for at least 12 months")
-    
-    if data["MonthsSinceLastDelinquent"] < 24 and data["MonthsSinceLastDelinquent"] > 0:
-        recommendations.append("Continue maintaining current payment schedule; delinquency will age with time")
-    
-    if risk_score < 0.3:
-        recommendations.append("Excellent profile - eligible for competitive interest rates")
-    
-    if len(recommendations) == 0:
-        recommendations.append("Maintain current financial discipline and monitor credit profile")
-    
-    return recommendations
 
 # Footer
 st.markdown("---")
