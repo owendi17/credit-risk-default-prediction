@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import pickle
-import plotly.graph_objects as go
 from datetime import datetime
 
 # Configure Streamlit page
@@ -48,7 +47,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==================== FEATURE DEFINITIONS ====================
-# Based on "Give Me Some Credit" Kaggle dataset
 FEATURE_DEFINITIONS = {
     "Age": {
         "label": "Age (years)",
@@ -56,7 +54,6 @@ FEATURE_DEFINITIONS = {
         "min": 18,
         "max": 120,
         "default": 40,
-        "unit": "years"
     },
     "NumberOfDependents": {
         "label": "Number of Dependents",
@@ -64,7 +61,6 @@ FEATURE_DEFINITIONS = {
         "min": 0,
         "max": 20,
         "default": 1,
-        "unit": "count"
     },
     "MonthlyIncome": {
         "label": "Monthly Income",
@@ -72,7 +68,6 @@ FEATURE_DEFINITIONS = {
         "min": 100,
         "max": 500000,
         "default": 5000,
-        "unit": "currency"
     },
     "DebtRatio": {
         "label": "Debt-to-Income Ratio",
@@ -80,7 +75,6 @@ FEATURE_DEFINITIONS = {
         "min": 0,
         "max": 10,
         "default": 0.5,
-        "unit": "ratio"
     },
     "MonthsSinceLastDelinquent": {
         "label": "Months Since Last Delinquency",
@@ -88,7 +82,6 @@ FEATURE_DEFINITIONS = {
         "min": 0,
         "max": 600,
         "default": 100,
-        "unit": "months"
     },
     "NumberOfOpenCreditLinesAndLoans": {
         "label": "Open Credit Lines/Loans",
@@ -96,7 +89,6 @@ FEATURE_DEFINITIONS = {
         "min": 0,
         "max": 50,
         "default": 5,
-        "unit": "count"
     },
     "NumberOfTimes90DaysLate": {
         "label": "Times 90+ Days Late",
@@ -104,7 +96,6 @@ FEATURE_DEFINITIONS = {
         "min": 0,
         "max": 100,
         "default": 0,
-        "unit": "count"
     },
     "NumberOfRealEstateLoans": {
         "label": "Real Estate Loans",
@@ -112,7 +103,6 @@ FEATURE_DEFINITIONS = {
         "min": 0,
         "max": 50,
         "default": 1,
-        "unit": "count"
     },
     "NumberOfTimes60DaysLate": {
         "label": "Times 60-89 Days Late",
@@ -120,7 +110,6 @@ FEATURE_DEFINITIONS = {
         "min": 0,
         "max": 100,
         "default": 0,
-        "unit": "count"
     },
     "NumberOfDays90DaysLate": {
         "label": "Total 90+ Days Late (days)",
@@ -128,7 +117,6 @@ FEATURE_DEFINITIONS = {
         "min": 0,
         "max": 10000,
         "default": 0,
-        "unit": "days"
     },
     "RevolvingUtilizationOfUnsecuredLines": {
         "label": "Credit Utilization Ratio",
@@ -136,11 +124,10 @@ FEATURE_DEFINITIONS = {
         "min": 0,
         "max": 1,
         "default": 0.3,
-        "unit": "ratio"
     },
 }
 
-# Example profiles for different risk scenarios
+# Example profiles
 EXAMPLE_PROFILES = {
     "Low Risk - Stable Professional": {
         "Age": 45,
@@ -191,12 +178,9 @@ st.markdown("""
     This tool uses advanced machine learning to predict the likelihood of credit default 
     based on borrower financial profiles. Enter customer details below to receive a 
     risk assessment and actionable insights.
-    
-    **Model Performance:**
-    - AUC-ROC: 0.8628 | Gini Coefficient: 0.7255 | KS Statistic: 0.5779
 """)
 
-# ==================== SIDEBAR: QUICK ACTIONS ====================
+# ==================== SIDEBAR ====================
 st.sidebar.markdown("### 🎯 Quick Actions")
 
 # Example profile selector
@@ -206,10 +190,7 @@ selected_profile = st.sidebar.selectbox(
     help="Load pre-configured customer profiles to test the model"
 )
 
-# ==================== MAIN INPUT FORM ====================
-st.markdown("### 📋 Customer Financial Profile")
-
-# Initialize session state if empty
+# ==================== INITIALIZE SESSION STATE ====================
 if "form_data" not in st.session_state:
     st.session_state.form_data = {key: FEATURE_DEFINITIONS[key]["default"] 
                                    for key in FEATURE_DEFINITIONS}
@@ -219,7 +200,9 @@ if selected_profile != "--- Enter Manually ---":
     st.session_state.form_data = EXAMPLE_PROFILES[selected_profile].copy()
     st.success(f"✅ Loaded profile: {selected_profile}")
 
-# Create organized input columns
+# ==================== INPUT FORM ====================
+st.markdown("### 📋 Customer Financial Profile")
+
 col1, col2 = st.columns(2)
 
 with col1:
@@ -229,7 +212,7 @@ with col1:
         FEATURE_DEFINITIONS["Age"]["label"],
         min_value=FEATURE_DEFINITIONS["Age"]["min"],
         max_value=FEATURE_DEFINITIONS["Age"]["max"],
-        value=st.session_state.form_data["Age"],
+        value=int(st.session_state.form_data["Age"]),
         step=1,
         help=FEATURE_DEFINITIONS["Age"]["description"]
     )
@@ -239,7 +222,7 @@ with col1:
         FEATURE_DEFINITIONS["NumberOfDependents"]["label"],
         min_value=FEATURE_DEFINITIONS["NumberOfDependents"]["min"],
         max_value=FEATURE_DEFINITIONS["NumberOfDependents"]["max"],
-        value=st.session_state.form_data["NumberOfDependents"],
+        value=int(st.session_state.form_data["NumberOfDependents"]),
         step=1,
         help=FEATURE_DEFINITIONS["NumberOfDependents"]["description"]
     )
@@ -252,19 +235,20 @@ with col2:
         FEATURE_DEFINITIONS["MonthlyIncome"]["label"],
         min_value=FEATURE_DEFINITIONS["MonthlyIncome"]["min"],
         max_value=FEATURE_DEFINITIONS["MonthlyIncome"]["max"],
-        value=st.session_state.form_data["MonthlyIncome"],
+        value=int(st.session_state.form_data["MonthlyIncome"]),
         step=100,
         help=FEATURE_DEFINITIONS["MonthlyIncome"]["description"]
     )
     st.session_state.form_data["MonthlyIncome"] = monthly_income
     
-    debt_ratio = st.slider(
+    debt_ratio = st.number_input(
         FEATURE_DEFINITIONS["DebtRatio"]["label"],
-        min_value=FEATURE_DEFINITIONS["DebtRatio"]["min"],
-        max_value=FEATURE_DEFINITIONS["DebtRatio"]["max"],
-        value=st.session_state.form_data["DebtRatio"],
+        min_value=0.0,
+        max_value=10.0,
+        value=float(st.session_state.form_data["DebtRatio"]),
         step=0.05,
-        help=FEATURE_DEFINITIONS["DebtRatio"]["description"]
+        help=FEATURE_DEFINITIONS["DebtRatio"]["description"],
+        format="%.2f"
     )
     st.session_state.form_data["DebtRatio"] = debt_ratio
 
@@ -278,7 +262,7 @@ with col1:
         FEATURE_DEFINITIONS["MonthsSinceLastDelinquent"]["label"],
         min_value=FEATURE_DEFINITIONS["MonthsSinceLastDelinquent"]["min"],
         max_value=FEATURE_DEFINITIONS["MonthsSinceLastDelinquent"]["max"],
-        value=st.session_state.form_data["MonthsSinceLastDelinquent"],
+        value=int(st.session_state.form_data["MonthsSinceLastDelinquent"]),
         step=1,
         help=FEATURE_DEFINITIONS["MonthsSinceLastDelinquent"]["description"]
     )
@@ -289,7 +273,7 @@ with col2:
         FEATURE_DEFINITIONS["NumberOfTimes90DaysLate"]["label"],
         min_value=FEATURE_DEFINITIONS["NumberOfTimes90DaysLate"]["min"],
         max_value=FEATURE_DEFINITIONS["NumberOfTimes90DaysLate"]["max"],
-        value=st.session_state.form_data["NumberOfTimes90DaysLate"],
+        value=int(st.session_state.form_data["NumberOfTimes90DaysLate"]),
         step=1,
         help=FEATURE_DEFINITIONS["NumberOfTimes90DaysLate"]["description"]
     )
@@ -300,7 +284,7 @@ with col3:
         FEATURE_DEFINITIONS["NumberOfTimes60DaysLate"]["label"],
         min_value=FEATURE_DEFINITIONS["NumberOfTimes60DaysLate"]["min"],
         max_value=FEATURE_DEFINITIONS["NumberOfTimes60DaysLate"]["max"],
-        value=st.session_state.form_data["NumberOfTimes60DaysLate"],
+        value=int(st.session_state.form_data["NumberOfTimes60DaysLate"]),
         step=1,
         help=FEATURE_DEFINITIONS["NumberOfTimes60DaysLate"]["description"]
     )
@@ -316,7 +300,7 @@ with col1:
         FEATURE_DEFINITIONS["NumberOfOpenCreditLinesAndLoans"]["label"],
         min_value=FEATURE_DEFINITIONS["NumberOfOpenCreditLinesAndLoans"]["min"],
         max_value=FEATURE_DEFINITIONS["NumberOfOpenCreditLinesAndLoans"]["max"],
-        value=st.session_state.form_data["NumberOfOpenCreditLinesAndLoans"],
+        value=int(st.session_state.form_data["NumberOfOpenCreditLinesAndLoans"]),
         step=1,
         help=FEATURE_DEFINITIONS["NumberOfOpenCreditLinesAndLoans"]["description"]
     )
@@ -327,20 +311,21 @@ with col2:
         FEATURE_DEFINITIONS["NumberOfRealEstateLoans"]["label"],
         min_value=FEATURE_DEFINITIONS["NumberOfRealEstateLoans"]["min"],
         max_value=FEATURE_DEFINITIONS["NumberOfRealEstateLoans"]["max"],
-        value=st.session_state.form_data["NumberOfRealEstateLoans"],
+        value=int(st.session_state.form_data["NumberOfRealEstateLoans"]),
         step=1,
         help=FEATURE_DEFINITIONS["NumberOfRealEstateLoans"]["description"]
     )
     st.session_state.form_data["NumberOfRealEstateLoans"] = real_estate_loans
 
 with col3:
-    credit_utilization = st.slider(
+    credit_utilization = st.number_input(
         FEATURE_DEFINITIONS["RevolvingUtilizationOfUnsecuredLines"]["label"],
-        min_value=FEATURE_DEFINITIONS["RevolvingUtilizationOfUnsecuredLines"]["min"],
-        max_value=FEATURE_DEFINITIONS["RevolvingUtilizationOfUnsecuredLines"]["max"],
-        value=st.session_state.form_data["RevolvingUtilizationOfUnsecuredLines"],
+        min_value=0.0,
+        max_value=1.0,
+        value=float(st.session_state.form_data["RevolvingUtilizationOfUnsecuredLines"]),
         step=0.01,
-        help=FEATURE_DEFINITIONS["RevolvingUtilizationOfUnsecuredLines"]["description"]
+        help=FEATURE_DEFINITIONS["RevolvingUtilizationOfUnsecuredLines"]["description"],
+        format="%.2f"
     )
     st.session_state.form_data["RevolvingUtilizationOfUnsecuredLines"] = credit_utilization
 
@@ -353,7 +338,7 @@ with st.expander("⚙️ Advanced Details (Optional)", expanded=False):
             FEATURE_DEFINITIONS["NumberOfDays90DaysLate"]["label"],
             min_value=FEATURE_DEFINITIONS["NumberOfDays90DaysLate"]["min"],
             max_value=FEATURE_DEFINITIONS["NumberOfDays90DaysLate"]["max"],
-            value=st.session_state.form_data["NumberOfDays90DaysLate"],
+            value=int(st.session_state.form_data["NumberOfDays90DaysLate"]),
             step=1,
             help=FEATURE_DEFINITIONS["NumberOfDays90DaysLate"]["description"]
         )
@@ -373,36 +358,20 @@ with col2:
 if predict_button:
     st.markdown("---")
     
-    # Prepare data for prediction
-    input_data = pd.DataFrame([st.session_state.form_data])
-    
-    # Mock prediction (replace with actual model loading)
-    # For now, we'll create a simple scoring system
     try:
-        # Load your model here
-        # with open('fraud_model.pkl', 'rb') as f:
-        #     model = pickle.load(f)
-        # prediction_prob = model.predict_proba(input_data)[0][1]
-        
-        # Mock prediction based on simple heuristics
+        # Calculate risk score (using mock model - replace with your actual model)
         risk_score = calculate_risk_score(st.session_state.form_data)
         
         # Determine risk level
         if risk_score < 0.3:
             risk_level = "🟢 LOW RISK"
-            risk_class = "risk-low"
             recommendation = "✅ Likely Eligible for Approval"
-            color = "#388e3c"
         elif risk_score < 0.6:
             risk_level = "🟡 MEDIUM RISK"
-            risk_class = "risk-medium"
             recommendation = "⚠️ Further Review Recommended"
-            color = "#f57c00"
         else:
             risk_level = "🔴 HIGH RISK"
-            risk_class = "risk-high"
             recommendation = "❌ Caution: Higher Default Probability"
-            color = "#d32f2f"
         
         # Display results in columns
         col1, col2, col3 = st.columns(3)
@@ -410,46 +379,21 @@ if predict_button:
         with col1:
             st.metric(
                 label="Default Probability",
-                value=f"{risk_score*100:.1f}%",
-                delta=None
+                value=f"{risk_score*100:.1f}%"
             )
         
         with col2:
-            st.metric(
-                label="Risk Classification",
-                value=risk_level
-            )
+            st.markdown(f"### Risk Classification\n{risk_level}")
         
         with col3:
-            st.metric(
-                label="Recommendation",
-                value=recommendation
-            )
+            st.markdown(f"### Recommendation\n{recommendation}")
         
-        # Risk Score Gauge Chart
-        fig_gauge = go.Figure(go.Indicator(
-            mode="gauge+number+delta",
-            value=risk_score * 100,
-            title={'text': "Default Risk Score (%)"},
-            delta={'reference': 50},
-            gauge={
-                'axis': {'range': [0, 100]},
-                'bar': {'color': color},
-                'steps': [
-                    {'range': [0, 30], 'color': "rgba(56, 142, 60, 0.2)"},
-                    {'range': [30, 60], 'color': "rgba(245, 124, 0, 0.2)"},
-                    {'range': [60, 100], 'color': "rgba(211, 47, 47, 0.2)"}
-                ],
-                'threshold': {
-                    'line': {'color': "red", 'width': 4},
-                    'thickness': 0.75,
-                    'value': 70
-                }
-            }
-        ))
+        # Risk bar
+        st.markdown("### 📊 Risk Score Visualization")
         
-        fig_gauge.update_layout(height=400, margin=dict(l=20, r=20, t=70, b=20))
-        st.plotly_chart(fig_gauge, use_container_width=True)
+        # Create a simple progress bar
+        risk_percentage = int(risk_score * 100)
+        st.progress(risk_score, text=f"{risk_percentage}% Default Risk")
         
         # Key Risk Factors
         st.markdown("### 🔍 Key Risk Factors")
@@ -481,26 +425,27 @@ if predict_button:
             st.metric("Credit Utilization", f"{credit_utilization*100:.1f}%")
         
         with col4:
-            st.metric("Payment History", "Good" if times_90_late == 0 else "Issues Detected")
+            payment_status = "Good" if times_90_late == 0 else "Issues Detected"
+            st.metric("Payment History", payment_status)
         
         # Recommendations
-        st.markdown("### 💡 Recommendations")
+        st.markdown("### 💡 Actionable Recommendations")
         
         recommendations = generate_recommendations(st.session_state.form_data, risk_score)
         for i, rec in enumerate(recommendations, 1):
             st.write(f"{i}. {rec}")
         
+        # Model Info
+        st.info("ℹ️ **Note:** This prediction is based on machine learning analysis. Final loan decisions should consider additional factors and require human review.")
+        
     except Exception as e:
         st.error(f"❌ Error in prediction: {str(e)}")
-        st.info("Please ensure the model file is properly loaded.")
+        st.info("Please check all input values and try again.")
 
 # ==================== HELPER FUNCTIONS ====================
 
 def calculate_risk_score(data):
-    """
-    Calculate risk score based on customer profile.
-    This is a simplified scoring - replace with actual model.
-    """
+    """Calculate risk score based on customer profile."""
     score = 0.2  # Base score
     
     # Debt ratio impact
@@ -579,7 +524,7 @@ def generate_recommendations(data, risk_score):
 st.markdown("---")
 st.markdown("""
     <div style='text-align: center; color: #888; font-size: 12px;'>
-        <p>💳 Credit Risk Assessment Tool | Powered by Machine Learning | Last Updated: 2026</p>
+        <p>💳 Credit Risk Assessment Tool | Powered by Machine Learning</p>
         <p><strong>Disclaimer:</strong> This tool provides predictions based on machine learning models. 
         Final loan decisions should consider additional factors and require human review.</p>
     </div>
