@@ -3,8 +3,5 @@ numpy
 scikit-learn
 joblib
 gunicorn
-<<<<<<< HEAD
 lightgbm
-=======
 lightgbm
->>>>>>> af698b048cd0649a94add1baee887c2ab22ca033
