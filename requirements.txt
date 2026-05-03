@@ -6,3 +6,4 @@ gunicorn
 lightgbm
 streamlit
 requests
+plotly
