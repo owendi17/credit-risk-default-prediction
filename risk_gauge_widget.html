@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Risk Gauge Widget</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .gauge-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 500px;
+            width: 100%;
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .gauge-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        
+        .gauge-header h2 {
+            color: #e2e8f0;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .gauge-header p {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+        
+        .gauge-wrapper {
+            position: relative;
+            width: 280px;
+            height: 280px;
+            margin: 0 auto 32px;
+        }
+        
+        svg {
+            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
+        }
+        
+        .risk-score {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 10;
+        }
+        
+        .risk-score-value {
+            font-size: 56px;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+        
+        .risk-score-unit {
+            font-size: 14px;
+            color: #cbd5e1;
+        }
+        
+        .risk-label {
+            display: inline-block;
+            margin-top: 16px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            animation: slideUp 0.6s ease-out 0.3s both;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .risk-label.low {
+            background: rgba(34, 197, 94, 0.2);
+            color: #86efac;
+            border: 1px solid rgba(34, 197, 94, 0.4);
+        }
+        
+        .risk-label.medium {
+            background: rgba(234, 179, 8, 0.2);
+            color: #fcd34d;
+            border: 1px solid rgba(234, 179, 8, 0.4);
+        }
+        
+        .risk-label.high {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+        
+        .details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .detail-item {
+            animation: slideUp 0.6s ease-out;
+            animation-fill-mode: both;
+        }
+        
+        .detail-item:nth-child(1) { animation-delay: 0.4s; }
+        .detail-item:nth-child(2) { animation-delay: 0.5s; }
+        .detail-item:nth-child(3) { animation-delay: 0.6s; }
+        .detail-item:nth-child(4) { animation-delay: 0.7s; }
+        
+        .detail-label {
+            display: block;
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        
+        .detail-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #e2e8f0;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 32px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.6);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #cbd5e1;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .needle {
+            transform-origin: 50% 70%;
+            transition: transform 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+    </style>
+</head>
+<body>
+    <div class="gauge-container">
+        <div class="gauge-header">
+            <h2>Credit Risk Assessment</h2>
+            <p>Default probability evaluation</p>
+        </div>
+        
+        <div class="gauge-wrapper">
+            <svg viewBox="0 0 280 280" width="280" height="280">
+                <!-- Background arc -->
+                <defs>
+                    <linearGradient id="riskGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#22c55e;stop-opacity:1" />
+                        <stop offset="33%" style="stop-color:#eab308;stop-opacity:1" />
+                        <stop offset="66%" style="stop-color:#f97316;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#ef4444;stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+                
+                <!-- Main gauge track -->
+                <circle cx="140" cy="140" r="110" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="12"/>
+                
+                <!-- Colored risk zones -->
+                <path d="M 140,30 A 110,110 0 0,1 240.9,71.5" fill="none" stroke="#22c55e" stroke-width="12" opacity="0.6"/>
+                <path d="M 240.9,71.5 A 110,110 0 0,1 250,140" fill="none" stroke="#eab308" stroke-width="12" opacity="0.6"/>
+                <path d="M 250,140 A 110,110 0 0,1 140,250" fill="none" stroke="#f97316" stroke-width="12" opacity="0.6"/>
+                <path d="M 140,250 A 110,110 0 0,1 29.1,71.5" fill="none" stroke="#ef4444" stroke-width="12" opacity="0.6"/>
+                
+                <!-- Needle (will be animated) -->
+                <g class="needle" id="needle">
+                    <line x1="140" y1="140" x2="140" y2="50" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+                    <circle cx="140" cy="140" r="6" fill="#fff"/>
+                </g>
+                
+                <!-- Scale marks -->
+                <g id="scaleMarks">
+                    <text x="140" y="40" text-anchor="middle" fill="#22c55e" font-size="12" font-weight="600">0%</text>
+                    <text x="230" y="150" text-anchor="middle" fill="#eab308" font-size="12" font-weight="600">33%</text>
+                    <text x="140" y="270" text-anchor="middle" fill="#ef4444" font-size="12" font-weight="600">100%</text>
+                    <text x="50" y="150" text-anchor="middle" fill="#f97316" font-size="12" font-weight="600">66%</text>
+                </g>
+            </svg>
+            
+            <div class="risk-score">
+                <div class="risk-score-value" id="scoreValue">72</div>
+                <div class="risk-score-unit">% Default Risk</div>
+                <div class="risk-label high" id="riskLabel">High Risk</div>
+            </div>
+        </div>
+        
+        <div class="details">
+            <div class="detail-item">
+                <span class="detail-label">Debt Ratio</span>
+                <span class="detail-value" id="debtRatio">45%</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Income</span>
+                <span class="detail-value" id="income">$65K</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Age</span>
+                <span class="detail-value" id="age">34</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Credit Score</span>
+                <span class="detail-value" id="creditScore">580</span>
+            </div>
+        </div>
+        
+        <div class="action-buttons">
+            <button class="btn-primary">Review Details</button>
+            <button class="btn-secondary">Request Docs</button>
+        </div>
+    </div>
+    
+    <script>
+        // Configuration
+        const config = {
+            minAngle: -135,
+            maxAngle: 135,
+            minValue: 0,
+            maxValue: 100
+        };
+        
+        // Sample data - replace with real data from Streamlit
+        const sampleData = {
+            riskScore: 72,
+            debtRatio: 45,
+            income: 65000,
+            age: 34,
+            creditScore: 580
+        };
+        
+        function getRiskLabel(score) {
+            if (score < 30) return 'Low Risk';
+            if (score < 70) return 'Medium Risk';
+            return 'High Risk';
+        }
+        
+        function getRiskClass(score) {
+            if (score < 30) return 'low';
+            if (score < 70) return 'medium';
+            return 'high';
+        }
+        
+        function angleFromValue(value) {
+            const range = config.maxAngle - config.minAngle;
+            const valueRange = config.maxValue - config.minValue;
+            return config.minAngle + (value / valueRange) * range;
+        }
+        
+        function updateGauge(riskScore, details = {}) {
+            // Update needle position
+            const angle = angleFromValue(riskScore);
+            const needle = document.getElementById('needle');
+            needle.style.transform = `rotate(${angle}deg)`;
+            
+            // Update score display
+            document.getElementById('scoreValue').textContent = Math.round(riskScore);
+            
+            // Update risk label
+            const labelElement = document.getElementById('riskLabel');
+            labelElement.textContent = getRiskLabel(riskScore);
+            labelElement.className = `risk-label ${getRiskClass(riskScore)}`;
+            
+            // Update detail values
+            if (details.debtRatio) document.getElementById('debtRatio').textContent = details.debtRatio + '%';
+            if (details.income) document.getElementById('income').textContent = '$' + (details.income / 1000).toFixed(0) + 'K';
+            if (details.age) document.getElementById('age').textContent = details.age;
+            if (details.creditScore) document.getElementById('creditScore').textContent = details.creditScore;
+        }
+        
+        // Initialize with sample data
+        window.addEventListener('load', () => {
+            updateGauge(sampleData.riskScore, sampleData);
+        });
+        
+        // Expose function for Streamlit
+        window.updateRiskGauge = updateGauge;
+    </script>
+</body>
+</html>
