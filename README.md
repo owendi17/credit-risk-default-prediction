@@ -124,7 +124,8 @@ SHAP analysis provides interpretable insights for risk decisions:
 
 ---
 
-## 🚀 Deployment (In Progress)
+## 🚀 Deployment
 
-- Model is being deployed as an **interactive web app using Streamlit**  
+- Model is deployed as an **interactive web app using Streamlit**  
 - Users can input borrower information and receive **real-time risk predictions**
+- link-  https://credit-risk-default-prediction-dor3pwqugq68rbddhynfvy.streamlit.app/
